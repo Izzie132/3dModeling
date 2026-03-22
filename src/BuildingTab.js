@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sky, Html } from '@react-three/drei';
+import * as THREE from 'three';
 import { slugify } from './beamData';
 
 const COLORS = {
@@ -195,7 +196,81 @@ function House({ hoveredId, onHover, onBeamClick }) {
   );
 }
 
-function BuildingScene({ hoveredId, onHover, onBeamClick }) {
+const WIND_FACES = [
+  { id: 'f1', label: 'F1', direction: [0, 0, -1], arrowPos: [0, 2, -6.5],  rotation: 0 },
+  { id: 'f2', label: 'F2', direction: [0, 0, 1],  arrowPos: [0, 2, 6.5],   rotation: Math.PI },
+  { id: 'f3', label: 'F3', direction: [-1, 0, 0], arrowPos: [-5, 2, 0],    rotation: Math.PI / 2 },
+  { id: 'f4', label: 'F4', direction: [1, 0, 0],  arrowPos: [5, 2, 0],     rotation: -Math.PI / 2 },
+];
+
+function WindArrow({ face }) {
+  const groupRef = useRef();
+  const bobOffset = useRef(Math.random() * Math.PI * 2);
+
+  const arrowShape = useMemo(() => {
+    const shape = new THREE.Shape();
+    // Arrow pointing in +Z direction (toward building)
+    shape.moveTo(0, 0.6);        // tip
+    shape.lineTo(-0.35, -0.1);   // left barb
+    shape.lineTo(-0.12, -0.1);   // left neck
+    shape.lineTo(-0.12, -0.6);   // left tail bottom
+    shape.lineTo(0.12, -0.6);    // right tail bottom
+    shape.lineTo(0.12, -0.1);    // right neck
+    shape.lineTo(0.35, -0.1);    // right barb
+    shape.closePath();
+    return shape;
+  }, []);
+
+  const extrudeSettings = useMemo(() => ({
+    depth: 0.08,
+    bevelEnabled: true,
+    bevelThickness: 0.02,
+    bevelSize: 0.02,
+    bevelSegments: 2,
+  }), []);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const t = state.clock.elapsedTime + bobOffset.current;
+    groupRef.current.position.y = face.arrowPos[1] + Math.sin(t * 1.5) * 0.15;
+  });
+
+  return (
+    <group
+      ref={groupRef}
+      position={face.arrowPos}
+      rotation={[0, face.rotation, 0]}
+    >
+      {/* Arrow rotated to lay flat pointing toward building */}
+      <group rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <mesh>
+          <extrudeGeometry args={[arrowShape, extrudeSettings]} />
+          <meshStandardMaterial
+            color="#E63946"
+            emissive="#E63946"
+            emissiveIntensity={0.3}
+            metalness={0.2}
+            roughness={0.5}
+          />
+        </mesh>
+      </group>
+      <Html distanceFactor={15} center position={[0, 1, 0]}>
+        <div style={{
+          color: '#E63946',
+          fontSize: 12,
+          fontWeight: 'bold',
+          textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+        }}>
+          {face.label}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+function BuildingScene({ hoveredId, onHover, onBeamClick, windFace }) {
   return (
     <>
       <ambientLight intensity={0.6} />
@@ -203,6 +278,8 @@ function BuildingScene({ hoveredId, onHover, onBeamClick }) {
       <directionalLight position={[-3, 4, -2]} intensity={0.3} />
 
       <House hoveredId={hoveredId} onHover={onHover} onBeamClick={onBeamClick} />
+
+      {windFace && <WindArrow face={windFace} />}
 
       <Sky sunPosition={[100, 50, 100]} />
       <OrbitControls enableDamping dampingFactor={0.1} />
@@ -214,6 +291,7 @@ export default function BuildingTab() {
   const navigate = useNavigate();
   const [hoveredId, setHoveredId] = useState(null);
   const [hoveredLabel, setHoveredLabel] = useState(null);
+  const [windDirection, setWindDirection] = useState(null);
 
   const handleHover = (id, label) => {
     setHoveredId(id);
@@ -224,8 +302,11 @@ export default function BuildingTab() {
     navigate(`/beam/${slugify(label)}`);
   };
 
+  const windFace = WIND_FACES.find((f) => f.id === windDirection) || null;
+
   return (
     <>
+      {/* Legend */}
       <div style={{
         position: 'absolute',
         top: 52,
@@ -271,9 +352,122 @@ export default function BuildingTab() {
           </div>
         ))}
       </div>
+
+      {/* Wind Direction Selector */}
+      <div style={{
+        position: 'absolute',
+        top: 52,
+        right: 16,
+        zIndex: 1,
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 8,
+        padding: '12px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}>
+        <span style={{
+          color: '#E63946',
+          fontSize: 12,
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+        }}>
+          Wind Direction
+        </span>
+
+        {/* Compass-style grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gridTemplateRows: '1fr 1fr 1fr',
+          gap: 4,
+          width: 108,
+        }}>
+          {/* Row 1: _, F1, _ */}
+          <div />
+          <WindButton
+            label="F1"
+            symbol={"\u2193"}
+            active={windDirection === 'f1'}
+            onClick={() => setWindDirection(windDirection === 'f1' ? null : 'f1')}
+          />
+          <div />
+
+          {/* Row 2: F3, indicator, F4 */}
+          <WindButton
+            label="F3"
+            symbol={"\u2192"}
+            active={windDirection === 'f3'}
+            onClick={() => setWindDirection(windDirection === 'f3' ? null : 'f3')}
+          />
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <div style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: windDirection ? '#E63946' : 'rgba(255,255,255,0.2)',
+              transition: 'background 0.2s',
+            }} />
+          </div>
+          <WindButton
+            label="F4"
+            symbol={"\u2190"}
+            active={windDirection === 'f4'}
+            onClick={() => setWindDirection(windDirection === 'f4' ? null : 'f4')}
+          />
+
+          {/* Row 3: _, F2, _ */}
+          <div />
+          <WindButton
+            label="F2"
+            symbol={"\u2191"}
+            active={windDirection === 'f2'}
+            onClick={() => setWindDirection(windDirection === 'f2' ? null : 'f2')}
+          />
+          <div />
+        </div>
+      </div>
+
       <Canvas camera={{ position: [8, 6, 8] }}>
-        <BuildingScene hoveredId={hoveredId} onHover={handleHover} onBeamClick={handleBeamClick} />
+        <BuildingScene hoveredId={hoveredId} onHover={handleHover} onBeamClick={handleBeamClick} windFace={windFace} />
       </Canvas>
     </>
+  );
+}
+
+function WindButton({ label, symbol, active, onClick }) {
+  return (
+    <button
+      title={label}
+      onClick={onClick}
+      style={{
+        width: 32,
+        height: 32,
+        border: active ? '2px solid #E63946' : '1px solid rgba(255,255,255,0.2)',
+        borderRadius: 6,
+        background: active ? 'rgba(230,57,70,0.25)' : 'rgba(255,255,255,0.05)',
+        color: active ? '#E63946' : 'rgba(255,255,255,0.7)',
+        fontSize: 11,
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.15s',
+        padding: 0,
+        lineHeight: 1,
+        gap: 1,
+        fontFamily: 'inherit',
+      }}
+    >
+      <span style={{ fontSize: 10 }}>{label}</span>
+    </button>
   );
 }
