@@ -5,15 +5,13 @@ import { OrbitControls, Sky, Html } from '@react-three/drei';
 import { slugify } from './beamData';
 
 const COLORS = {
-  ridge: '#E63946',
   eaves: '#457B9D',
   rails: '#2A9D8F',
-  rafters: '#E9C46A',
   purlins: '#F4A261',
-  ties: '#9B5DE5',
 };
 
 const BEAM = 0.1;
+const MUTED = '#2a2a2a';
 
 let beamIdCounter = 0;
 
@@ -64,46 +62,47 @@ function GableRoof({ hoveredId, onHover, onBeamClick }) {
   const ridgeY = 4.5;
   const eavesY = 3;
   const eavesX = 2.7;
-  const roofHalfZ = 2.2;
+  const roofHalfZ = 4.4;
 
   const rafterLength = Math.sqrt(eavesX ** 2 + (ridgeY - eavesY) ** 2);
   const rafterAngle = Math.atan2(ridgeY - eavesY, eavesX);
-  const rafterZPositions = [-2, -1, 0, 1, 2];
-
+  const rafterZPositions = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
   const purlinFracs = [0.33, 0.66];
 
   const bp = { hoveredId, onHover, onBeamClick };
 
   return (
     <group>
-      <Beam position={[0, ridgeY, 0]} args={[BEAM, BEAM, roofHalfZ * 2]} color={COLORS.ridge} label="Ridge Beam" {...bp} />
+      {/* Muted placeholder rafters */}
+      {rafterZPositions.map((z) => (
+        <group key={`rafter-${z}`}>
+          <mesh position={[-eavesX / 2, eavesY + (ridgeY - eavesY) / 2, z]} rotation={[0, 0, rafterAngle]}>
+            <boxGeometry args={[rafterLength, BEAM, BEAM]} />
+            <meshStandardMaterial color={MUTED} />
+          </mesh>
+          <mesh position={[eavesX / 2, eavesY + (ridgeY - eavesY) / 2, z]} rotation={[0, 0, -rafterAngle]}>
+            <boxGeometry args={[rafterLength, BEAM, BEAM]} />
+            <meshStandardMaterial color={MUTED} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Muted placeholder tie beams */}
+      {rafterZPositions.map((z) => (
+        <mesh key={`tie-${z}`} position={[0, eavesY, z]}>
+          <boxGeometry args={[eavesX * 2, BEAM, BEAM]} />
+          <meshStandardMaterial color={MUTED} />
+        </mesh>
+      ))}
+
+      {/* Muted placeholder ridge beam */}
+      <mesh position={[0, ridgeY, 0]}>
+        <boxGeometry args={[BEAM, BEAM, roofHalfZ * 2]} />
+        <meshStandardMaterial color={MUTED} />
+      </mesh>
 
       <Beam position={[-eavesX, eavesY, 0]} args={[BEAM, BEAM, roofHalfZ * 2]} color={COLORS.eaves} label="Eaves Beam" {...bp} />
       <Beam position={[eavesX, eavesY, 0]} args={[BEAM, BEAM, roofHalfZ * 2]} color={COLORS.eaves} label="Eaves Beam" {...bp} />
-
-      <Beam position={[0, eavesY, -roofHalfZ]} args={[eavesX * 2, BEAM, BEAM]} color={COLORS.rails} label="Rail" {...bp} />
-      <Beam position={[0, eavesY, roofHalfZ]} args={[eavesX * 2, BEAM, BEAM]} color={COLORS.rails} label="Rail" {...bp} />
-
-      {rafterZPositions.map((z) => (
-        <group key={z}>
-          <Beam
-            position={[-eavesX / 2, eavesY + (ridgeY - eavesY) / 2, z]}
-            args={[rafterLength, BEAM, BEAM]}
-            rotation={[0, 0, rafterAngle]}
-            color={COLORS.rafters}
-            label="Rafter"
-            {...bp}
-          />
-          <Beam
-            position={[eavesX / 2, eavesY + (ridgeY - eavesY) / 2, z]}
-            args={[rafterLength, BEAM, BEAM]}
-            rotation={[0, 0, -rafterAngle]}
-            color={COLORS.rafters}
-            label="Rafter"
-            {...bp}
-          />
-        </group>
-      ))}
 
       {purlinFracs.map((f) => {
         const x = eavesX * (1 - f);
@@ -116,43 +115,30 @@ function GableRoof({ hoveredId, onHover, onBeamClick }) {
         );
       })}
 
-      {rafterZPositions.map((z) => (
-        <Beam
-          key={`tie-${z}`}
-          position={[0, eavesY, z]}
-          args={[eavesX * 2, BEAM, BEAM]}
-          color={COLORS.ties}
-          label="Tie Beam"
-          {...bp}
-        />
-      ))}
     </group>
   );
 }
 
 const KEY_ITEMS = [
-  { label: 'Ridge Beam', color: COLORS.ridge },
   { label: 'Eaves Beam', color: COLORS.eaves },
   { label: 'Rail', color: COLORS.rails },
-  { label: 'Rafter', color: COLORS.rafters },
   { label: 'Purlin', color: COLORS.purlins },
-  { label: 'Tie Beam', color: COLORS.ties },
 ];
 
-const WALL = '#A0785A';
+const WALL = MUTED;
 const WALL_BEAM = 0.1;
 
-function WallFrame() {
+function WallFrame({ hoveredId, onHover, onBeamClick }) {
   const hw = 2;
-  const hd = 1.5;
+  const hd = 3.5;
   const h = 3;
+  const railYPositions = [h * 0.25, h * 0.5, h * 0.75];
 
   const corners = [
     [-hw, 0, -hd], [hw, 0, -hd], [hw, 0, hd], [-hw, 0, hd],
   ];
 
-  const studZPositions = [-0.75, 0, 0.75];
-  const studXPositions = [-1, 0, 1];
+  const bp = { hoveredId, onHover, onBeamClick };
 
   return (
     <group>
@@ -163,51 +149,33 @@ function WallFrame() {
         </mesh>
       ))}
 
-      {[-hd, hd].map((z) => (
-        <group key={`wall-x-${z}`}>
-          <mesh position={[0, 0, z]}>
-            <boxGeometry args={[hw * 2, WALL_BEAM, WALL_BEAM]} />
-            <meshStandardMaterial color={WALL} />
-          </mesh>
-          <mesh position={[0, h, z]}>
-            <boxGeometry args={[hw * 2, WALL_BEAM, WALL_BEAM]} />
-            <meshStandardMaterial color={WALL} />
-          </mesh>
-          <mesh position={[0, h / 2, z]}>
-            <boxGeometry args={[hw * 2, WALL_BEAM, WALL_BEAM]} />
-            <meshStandardMaterial color={WALL} />
-          </mesh>
-          {studXPositions.map((x) => (
-            <mesh key={`stud-${z}-${x}`} position={[x, h / 2, z]}>
-              <boxGeometry args={[WALL_BEAM, h, WALL_BEAM]} />
-              <meshStandardMaterial color={WALL} />
-            </mesh>
-          ))}
-        </group>
-      ))}
+      {/* Rails on gable ends */}
+      {[-hd, hd].map((z) =>
+        railYPositions.map((y) => (
+          <Beam
+            key={`rail-end-${z}-${y}`}
+            position={[0, y, z]}
+            args={[hw * 2, WALL_BEAM, WALL_BEAM]}
+            color={COLORS.rails}
+            label="Rail"
+            {...bp}
+          />
+        ))
+      )}
 
-      {[-hw, hw].map((x) => (
-        <group key={`wall-z-${x}`}>
-          <mesh position={[x, 0, 0]}>
-            <boxGeometry args={[WALL_BEAM, WALL_BEAM, hd * 2]} />
-            <meshStandardMaterial color={WALL} />
-          </mesh>
-          <mesh position={[x, h, 0]}>
-            <boxGeometry args={[WALL_BEAM, WALL_BEAM, hd * 2]} />
-            <meshStandardMaterial color={WALL} />
-          </mesh>
-          <mesh position={[x, h / 2, 0]}>
-            <boxGeometry args={[WALL_BEAM, WALL_BEAM, hd * 2]} />
-            <meshStandardMaterial color={WALL} />
-          </mesh>
-          {studZPositions.map((z) => (
-            <mesh key={`stud-${x}-${z}`} position={[x, h / 2, z]}>
-              <boxGeometry args={[WALL_BEAM, h, WALL_BEAM]} />
-              <meshStandardMaterial color={WALL} />
-            </mesh>
-          ))}
-        </group>
-      ))}
+      {/* Rails on each long side */}
+      {[-hw, hw].map((x) =>
+        railYPositions.map((y) => (
+          <Beam
+            key={`rail-${x}-${y}`}
+            position={[x, y, 0]}
+            args={[WALL_BEAM, WALL_BEAM, hd * 2]}
+            color={COLORS.rails}
+            label="Rail"
+            {...bp}
+          />
+        ))
+      )}
     </group>
   );
 }
@@ -215,7 +183,7 @@ function WallFrame() {
 function House({ hoveredId, onHover, onBeamClick }) {
   return (
     <group>
-      <WallFrame />
+      <WallFrame hoveredId={hoveredId} onHover={onHover} onBeamClick={onBeamClick} />
 
       <GableRoof hoveredId={hoveredId} onHover={onHover} onBeamClick={onBeamClick} />
 
