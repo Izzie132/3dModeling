@@ -4,6 +4,7 @@ import { OrbitControls, Sky } from '@react-three/drei';
 import FloatingObject from './components/FloatingObject';
 import Ocean from './components/Ocean';
 import CameraController from './components/CameraController';
+import OverlayPanel from './components/OverlayPanel';
 
 const objects = [
   {
@@ -102,15 +103,7 @@ export default function ShapesTab() {
 
   return (
     <>
-      <div style={{
-        position: 'absolute',
-        top: 52,
-        left: 16,
-        zIndex: 1,
-        display: 'flex',
-        gap: 8,
-        flexWrap: 'wrap',
-      }}>
+      <OverlayPanel top={52} left={16} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, background: 'transparent', backdropFilter: 'none', padding: 0 }}>
         {objects.map((obj) => (
           <button
             key={obj.name}
@@ -130,7 +123,7 @@ export default function ShapesTab() {
             {obj.name}
           </button>
         ))}
-      </div>
+      </OverlayPanel>
       <Canvas camera={{ position: [10, 6, 10] }}>
         <Scene onFocus={handleFocus} focusTarget={focusTarget} focusedName={focusedName} />
       </Canvas>
