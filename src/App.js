@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { Routes, Route, useNavigate, useParams, Navigate } from 'react-router-dom';
 import ShapesTab from './ShapesTab';
 import BuildingTab from './BuildingTab';
+import BeamDetailPage from './BeamDetailPage';
 import './App.css';
 
-function App() {
-  const [activeTab, setActiveTab] = useState('shapes');
+function HomePage() {
+  const { tab } = useParams();
+  const navigate = useNavigate();
 
-  const tabStyle = (tab) => ({
+  const tabStyle = (t) => ({
     padding: '10px 24px',
     border: 'none',
-    borderBottom: activeTab === tab ? '3px solid white' : '3px solid transparent',
-    background: activeTab === tab ? 'rgba(255,255,255,0.15)' : 'transparent',
+    borderBottom: tab === t ? '3px solid white' : '3px solid transparent',
+    background: tab === t ? 'rgba(255,255,255,0.15)' : 'transparent',
     color: 'white',
     cursor: 'pointer',
     fontWeight: 'bold',
@@ -31,17 +33,27 @@ function App() {
         background: 'rgba(0,0,0,0.4)',
         backdropFilter: 'blur(8px)',
       }}>
-        <button style={tabStyle('shapes')} onClick={() => setActiveTab('shapes')}>
+        <button style={tabStyle('shapes')} onClick={() => navigate('/shapes')}>
           Shapes
         </button>
-        <button style={tabStyle('building')} onClick={() => setActiveTab('building')}>
+        <button style={tabStyle('building')} onClick={() => navigate('/building')}>
           Building
         </button>
       </div>
 
-      {activeTab === 'shapes' && <ShapesTab />}
-      {activeTab === 'building' && <BuildingTab />}
+      {tab === 'shapes' && <ShapesTab />}
+      {tab === 'building' && <BuildingTab />}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/shapes" replace />} />
+      <Route path="/:tab" element={<HomePage />} />
+      <Route path="/beam/:type" element={<BeamDetailPage />} />
+    </Routes>
   );
 }
 

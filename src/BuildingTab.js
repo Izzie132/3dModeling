@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sky, Html } from '@react-three/drei';
+import { slugify } from './beamData';
 
 const COLORS = {
   ridge: '#E63946',
@@ -15,7 +17,7 @@ const BEAM = 0.1;
 
 let beamIdCounter = 0;
 
-function Beam({ position, args, rotation = [0, 0, 0], color, label, hoveredId, hoveredLabel, onHover }) {
+function Beam({ position, args, rotation = [0, 0, 0], color, label, hoveredId, onHover, onBeamClick }) {
   const [id] = useState(() => ++beamIdCounter);
   const isHovered = hoveredId === id;
 
@@ -30,6 +32,10 @@ function Beam({ position, args, rotation = [0, 0, 0], color, label, hoveredId, h
       onPointerOut={(e) => {
         e.stopPropagation();
         onHover(null, null);
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onBeamClick(label);
       }}
     >
       <boxGeometry args={args} />
@@ -54,7 +60,7 @@ function Beam({ position, args, rotation = [0, 0, 0], color, label, hoveredId, h
   );
 }
 
-function GableRoof({ hoveredId, hoveredLabel, onHover }) {
+function GableRoof({ hoveredId, onHover, onBeamClick }) {
   const ridgeY = 4.5;
   const eavesY = 3;
   const eavesX = 2.7;
@@ -66,7 +72,7 @@ function GableRoof({ hoveredId, hoveredLabel, onHover }) {
 
   const purlinFracs = [0.33, 0.66];
 
-  const bp = { hoveredId, hoveredLabel, onHover };
+  const bp = { hoveredId, onHover, onBeamClick };
 
   return (
     <group>
@@ -133,15 +139,85 @@ const KEY_ITEMS = [
   { label: 'Tie Beam', color: COLORS.ties },
 ];
 
-function House({ hoveredId, hoveredLabel, onHover }) {
+const WALL = '#A0785A';
+const WALL_BEAM = 0.1;
+
+function WallFrame() {
+  const hw = 2;
+  const hd = 1.5;
+  const h = 3;
+
+  const corners = [
+    [-hw, 0, -hd], [hw, 0, -hd], [hw, 0, hd], [-hw, 0, hd],
+  ];
+
+  const studZPositions = [-0.75, 0, 0.75];
+  const studXPositions = [-1, 0, 1];
+
   return (
     <group>
-      <mesh position={[0, 1.5, 0]}>
-        <boxGeometry args={[4, 3, 3]} />
-        <meshStandardMaterial color="#F5DEB3" />
-      </mesh>
+      {corners.map(([x, , z], i) => (
+        <mesh key={`post-${i}`} position={[x, h / 2, z]}>
+          <boxGeometry args={[WALL_BEAM, h, WALL_BEAM]} />
+          <meshStandardMaterial color={WALL} />
+        </mesh>
+      ))}
 
-      <GableRoof hoveredId={hoveredId} hoveredLabel={hoveredLabel} onHover={onHover} />
+      {[-hd, hd].map((z) => (
+        <group key={`wall-x-${z}`}>
+          <mesh position={[0, 0, z]}>
+            <boxGeometry args={[hw * 2, WALL_BEAM, WALL_BEAM]} />
+            <meshStandardMaterial color={WALL} />
+          </mesh>
+          <mesh position={[0, h, z]}>
+            <boxGeometry args={[hw * 2, WALL_BEAM, WALL_BEAM]} />
+            <meshStandardMaterial color={WALL} />
+          </mesh>
+          <mesh position={[0, h / 2, z]}>
+            <boxGeometry args={[hw * 2, WALL_BEAM, WALL_BEAM]} />
+            <meshStandardMaterial color={WALL} />
+          </mesh>
+          {studXPositions.map((x) => (
+            <mesh key={`stud-${z}-${x}`} position={[x, h / 2, z]}>
+              <boxGeometry args={[WALL_BEAM, h, WALL_BEAM]} />
+              <meshStandardMaterial color={WALL} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+
+      {[-hw, hw].map((x) => (
+        <group key={`wall-z-${x}`}>
+          <mesh position={[x, 0, 0]}>
+            <boxGeometry args={[WALL_BEAM, WALL_BEAM, hd * 2]} />
+            <meshStandardMaterial color={WALL} />
+          </mesh>
+          <mesh position={[x, h, 0]}>
+            <boxGeometry args={[WALL_BEAM, WALL_BEAM, hd * 2]} />
+            <meshStandardMaterial color={WALL} />
+          </mesh>
+          <mesh position={[x, h / 2, 0]}>
+            <boxGeometry args={[WALL_BEAM, WALL_BEAM, hd * 2]} />
+            <meshStandardMaterial color={WALL} />
+          </mesh>
+          {studZPositions.map((z) => (
+            <mesh key={`stud-${x}-${z}`} position={[x, h / 2, z]}>
+              <boxGeometry args={[WALL_BEAM, h, WALL_BEAM]} />
+              <meshStandardMaterial color={WALL} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function House({ hoveredId, onHover, onBeamClick }) {
+  return (
+    <group>
+      <WallFrame />
+
+      <GableRoof hoveredId={hoveredId} onHover={onHover} onBeamClick={onBeamClick} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
         <planeGeometry args={[50, 50]} />
@@ -151,14 +227,14 @@ function House({ hoveredId, hoveredLabel, onHover }) {
   );
 }
 
-function BuildingScene({ hoveredId, hoveredLabel, onHover }) {
+function BuildingScene({ hoveredId, onHover, onBeamClick }) {
   return (
     <>
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 8, 5]} intensity={1} castShadow />
       <directionalLight position={[-3, 4, -2]} intensity={0.3} />
 
-      <House hoveredId={hoveredId} hoveredLabel={hoveredLabel} onHover={onHover} />
+      <House hoveredId={hoveredId} onHover={onHover} onBeamClick={onBeamClick} />
 
       <Sky sunPosition={[100, 50, 100]} />
       <OrbitControls enableDamping dampingFactor={0.1} />
@@ -167,12 +243,17 @@ function BuildingScene({ hoveredId, hoveredLabel, onHover }) {
 }
 
 export default function BuildingTab() {
+  const navigate = useNavigate();
   const [hoveredId, setHoveredId] = useState(null);
   const [hoveredLabel, setHoveredLabel] = useState(null);
 
   const handleHover = (id, label) => {
     setHoveredId(id);
     setHoveredLabel(label);
+  };
+
+  const handleBeamClick = (label) => {
+    navigate(`/beam/${slugify(label)}`);
   };
 
   return (
@@ -193,12 +274,14 @@ export default function BuildingTab() {
         {KEY_ITEMS.map((item) => (
           <div
             key={item.label}
+            onClick={() => handleBeamClick(item.label)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 10,
               padding: '2px 4px',
               borderRadius: 4,
+              cursor: 'pointer',
               background: hoveredLabel === item.label ? 'rgba(255,255,255,0.15)' : 'transparent',
             }}
           >
@@ -221,7 +304,7 @@ export default function BuildingTab() {
         ))}
       </div>
       <Canvas camera={{ position: [8, 6, 8] }}>
-        <BuildingScene hoveredId={hoveredId} hoveredLabel={hoveredLabel} onHover={handleHover} />
+        <BuildingScene hoveredId={hoveredId} onHover={handleHover} onBeamClick={handleBeamClick} />
       </Canvas>
     </>
   );
