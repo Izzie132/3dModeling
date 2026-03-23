@@ -2,7 +2,7 @@ import { Routes, Route, useNavigate, useParams, Navigate } from 'react-router-do
 import ShapesTab from './shapes/ShapesTab';
 import BuildingTab from './building/BuildingTab';
 import BeamDetailPage from './building/BeamDetailPage';
-import useAppSettings from './useAppSettings';
+import { featureFlags } from './featureFlags';
 import './App.css';
 
 const TABS = [
@@ -53,20 +53,15 @@ function HomePage({ enabledTabs }) {
   );
 }
 
+const enabledTabs = TABS.filter((t) => featureFlags[t.id]);
+const defaultTab = enabledTabs[0]?.id || 'shapes';
+
 function App() {
-  const settings = useAppSettings();
-
-  if (!settings) return null;
-
-  const flags = settings.featureFlags || {};
-  const enabledTabs = TABS.filter((t) => flags[t.id]);
-  const defaultTab = enabledTabs[0]?.id || 'shapes';
-
   return (
     <Routes>
       <Route path="/" element={<Navigate to={`/${defaultTab}`} replace />} />
-      <Route path="/:tab" element={<HomePage enabledTabs={flags} />} />
-      {flags.building && <Route path="/beam/:type" element={<BeamDetailPage />} />}
+      <Route path="/:tab" element={<HomePage enabledTabs={featureFlags} />} />
+      {featureFlags.building && <Route path="/beam/:type" element={<BeamDetailPage />} />}
     </Routes>
   );
 }
