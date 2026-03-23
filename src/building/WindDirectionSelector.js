@@ -1,5 +1,5 @@
-import OverlayPanel from './OverlayPanel';
-import { WIND_FACES, WIND_COLOR } from '../buildingConstants';
+import OverlayPanel from '../components/OverlayPanel';
+import { WIND_FACES, WIND_COLOR } from './buildingConstants';
 
 function FaceButton({ label, active, onClick }) {
   return (

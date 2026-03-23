@@ -4,10 +4,10 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sky } from '@react-three/drei';
 import { slugify } from './beamData';
 import { WIND_FACES } from './buildingConstants';
-import House from './components/House';
-import WindArrow from './components/WindArrow';
-import BeamLegend from './components/BeamLegend';
-import WindDirectionSelector from './components/WindDirectionSelector';
+import House from './House';
+import WindArrow from './WindArrow';
+import BeamLegend from './BeamLegend';
+import WindDirectionSelector from './WindDirectionSelector';
 
 function BuildingScene({ hoveredId, onHover, onBeamClick, windFace }) {
   return (

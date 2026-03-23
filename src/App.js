@@ -1,10 +1,16 @@
 import { Routes, Route, useNavigate, useParams, Navigate } from 'react-router-dom';
-import ShapesTab from './ShapesTab';
-import BuildingTab from './BuildingTab';
-import BeamDetailPage from './BeamDetailPage';
+import ShapesTab from './shapes/ShapesTab';
+import BuildingTab from './building/BuildingTab';
+import BeamDetailPage from './building/BeamDetailPage';
+import useAppSettings from './useAppSettings';
 import './App.css';
 
-function HomePage() {
+const TABS = [
+  { id: 'shapes', label: 'Shapes', component: ShapesTab },
+  { id: 'building', label: 'Building', component: BuildingTab },
+];
+
+function HomePage({ enabledTabs }) {
   const { tab } = useParams();
   const navigate = useNavigate();
 
@@ -21,6 +27,8 @@ function HomePage() {
     transition: 'all 0.2s',
   });
 
+  const visibleTabs = TABS.filter((t) => enabledTabs[t.id]);
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <div style={{
@@ -33,26 +41,32 @@ function HomePage() {
         background: 'rgba(0,0,0,0.4)',
         backdropFilter: 'blur(8px)',
       }}>
-        <button style={tabStyle('shapes')} onClick={() => navigate('/shapes')}>
-          Shapes
-        </button>
-        <button style={tabStyle('building')} onClick={() => navigate('/building')}>
-          Building
-        </button>
+        {visibleTabs.map((t) => (
+          <button key={t.id} style={tabStyle(t.id)} onClick={() => navigate(`/${t.id}`)}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {tab === 'shapes' && <ShapesTab />}
-      {tab === 'building' && <BuildingTab />}
+      {visibleTabs.map((t) => tab === t.id && <t.component key={t.id} />)}
     </div>
   );
 }
 
 function App() {
+  const settings = useAppSettings();
+
+  if (!settings) return null;
+
+  const flags = settings.featureFlags || {};
+  const enabledTabs = TABS.filter((t) => flags[t.id]);
+  const defaultTab = enabledTabs[0]?.id || 'shapes';
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/shapes" replace />} />
-      <Route path="/:tab" element={<HomePage />} />
-      <Route path="/beam/:type" element={<BeamDetailPage />} />
+      <Route path="/" element={<Navigate to={`/${defaultTab}`} replace />} />
+      <Route path="/:tab" element={<HomePage enabledTabs={flags} />} />
+      {flags.building && <Route path="/beam/:type" element={<BeamDetailPage />} />}
     </Routes>
   );
 }

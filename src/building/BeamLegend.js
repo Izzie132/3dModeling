@@ -1,5 +1,5 @@
-import OverlayPanel from './OverlayPanel';
-import { LEGEND_ITEMS } from '../buildingConstants';
+import OverlayPanel from '../components/OverlayPanel';
+import { LEGEND_ITEMS } from './buildingConstants';
 
 export default function BeamLegend({ hoveredLabel, onBeamClick }) {
   return (

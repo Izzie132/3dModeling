@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p src/shapes src/building)",
+      "Bash(git mv:*)",
+      "Bash(npx react-scripts:*)"
+    ]
+  }
+}

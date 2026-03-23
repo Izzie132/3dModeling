@@ -1,5 +1,5 @@
 import InteractiveBeam from './InteractiveBeam';
-import { BEAM_COLORS, BEAM_THICKNESS, STRUCTURAL_COLOR } from '../buildingConstants';
+import { BEAM_COLORS, BEAM_THICKNESS, STRUCTURAL_COLOR } from './buildingConstants';
 
 const RIDGE_Y = 4.5;
 const EAVES_Y = 3;

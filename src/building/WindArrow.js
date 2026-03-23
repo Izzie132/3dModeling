@@ -2,7 +2,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { WIND_COLOR } from '../buildingConstants';
+import { WIND_COLOR } from './buildingConstants';
 
 const EXTRUDE_SETTINGS = {
   depth: 0.08,

@@ -1,10 +1,10 @@
 import { useRef, useState, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sky } from '@react-three/drei';
-import FloatingObject from './components/FloatingObject';
-import Ocean from './components/Ocean';
-import CameraController from './components/CameraController';
-import OverlayPanel from './components/OverlayPanel';
+import FloatingObject from './FloatingObject';
+import Ocean from './Ocean';
+import CameraController from './CameraController';
+import OverlayPanel from '../components/OverlayPanel';
 
 const objects = [
   {

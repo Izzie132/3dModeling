@@ -1,5 +1,5 @@
 import InteractiveBeam from './InteractiveBeam';
-import { BEAM_COLORS, BEAM_THICKNESS, STRUCTURAL_COLOR } from '../buildingConstants';
+import { BEAM_COLORS, BEAM_THICKNESS, STRUCTURAL_COLOR } from './buildingConstants';
 
 const HALF_WIDTH = 2;
 const HALF_DEPTH = 3.5;
