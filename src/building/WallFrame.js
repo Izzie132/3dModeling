@@ -21,7 +21,7 @@ export default function WallFrame({ hoveredId, onHover, onBeamClick }) {
       {CORNERS.map(([x, , z], i) => (
         <mesh key={`post-${i}`} position={[x, WALL_HEIGHT / 2, z]}>
           <boxGeometry args={[B, WALL_HEIGHT, B]} />
-          <meshStandardMaterial color={STRUCTURAL_COLOR} />
+          <meshStandardMaterial color={STRUCTURAL_COLOR} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
         </mesh>
       ))}
 

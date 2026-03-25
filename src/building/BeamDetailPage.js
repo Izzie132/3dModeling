@@ -2,15 +2,24 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { BEAM_TYPES } from './beamData';
+import { PALETTE } from './buildingConstants';
 
-const GHOST = '#333340';
+const GHOST = PALETTE.ghost;
 const B = 0.1;
 
 function DiagramBeam({ position, args, rotation = [0, 0, 0], color }) {
+  const isGhost = color === GHOST;
   return (
     <mesh position={position} rotation={rotation}>
       <boxGeometry args={args} />
-      <meshStandardMaterial color={color} transparent opacity={color === GHOST ? 0.25 : 1} />
+      <meshStandardMaterial
+        color={color}
+        transparent={isGhost}
+        opacity={isGhost ? 0.25 : 1}
+        polygonOffset
+        polygonOffsetFactor={-1}
+        polygonOffsetUnits={-1}
+      />
     </mesh>
   );
 }
@@ -25,7 +34,7 @@ function RoofDiagram({ highlight }) {
   const rafterAngle = Math.atan2(ridgeY - eavesY, eavesX);
   const rafterZPositions = [-2, -1, 0, 1, 2];
   const purlinFracs = [0.33, 0.66];
-  const MUTED = '#222230';
+  const MUTED = PALETTE.muted;
 
   const c = (type) => type === highlight ? BEAM_TYPES[highlight]?.color || '#fff' : GHOST;
 
@@ -36,11 +45,11 @@ function RoofDiagram({ highlight }) {
         <group key={`rafter-${z}`}>
           <mesh position={[-eavesX / 2, eavesY + (ridgeY - eavesY) / 2, z]} rotation={[0, 0, rafterAngle]}>
             <boxGeometry args={[rafterLength, B, B]} />
-            <meshStandardMaterial color={MUTED} />
+            <meshStandardMaterial color={MUTED} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
           </mesh>
           <mesh position={[eavesX / 2, eavesY + (ridgeY - eavesY) / 2, z]} rotation={[0, 0, -rafterAngle]}>
             <boxGeometry args={[rafterLength, B, B]} />
-            <meshStandardMaterial color={MUTED} />
+            <meshStandardMaterial color={MUTED} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
           </mesh>
         </group>
       ))}
@@ -49,14 +58,14 @@ function RoofDiagram({ highlight }) {
       {rafterZPositions.map((z) => (
         <mesh key={`tie-${z}`} position={[0, eavesY, z]}>
           <boxGeometry args={[eavesX * 2, B, B]} />
-          <meshStandardMaterial color={MUTED} />
+          <meshStandardMaterial color={MUTED} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
         </mesh>
       ))}
 
       {/* Muted placeholder ridge beam */}
       <mesh position={[0, ridgeY, 0]}>
         <boxGeometry args={[B, B, roofHalfZ * 2]} />
-        <meshStandardMaterial color={MUTED} />
+        <meshStandardMaterial color={MUTED} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
       </mesh>
 
       <DiagramBeam position={[-eavesX, eavesY, 0]} args={[B, B, roofHalfZ * 2]} color={c('eaves-beam')} />
@@ -97,8 +106,8 @@ export default function BeamDetailPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#1a1a2e',
-        color: 'white',
+        background: PALETTE.pageBg,
+        color: PALETTE.textPrimary,
         flexDirection: 'column',
         gap: 16,
       }}>
@@ -114,8 +123,8 @@ export default function BeamDetailPage() {
     <div style={{
       width: '100vw',
       height: '100vh',
-      background: '#1a1a2e',
-      color: 'white',
+      background: PALETTE.pageBg,
+      color: PALETTE.textPrimary,
       overflow: 'auto',
     }}>
       <div style={{
@@ -144,12 +153,12 @@ export default function BeamDetailPage() {
           marginTop: 24,
           borderRadius: 12,
           overflow: 'hidden',
-          background: '#12121e',
-          border: '1px solid rgba(255,255,255,0.1)',
+          background: PALETTE.canvasBg,
+          border: `1px solid ${PALETTE.border}`,
         }}>
           <Canvas camera={{ position: [5, 3, 5], fov: 40 }}>
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[5, 5, 5]} intensity={0.8} />
+            <ambientLight intensity={0.8} />
+            <directionalLight position={[5, 5, 5]} intensity={1} />
             <RoofDiagram highlight={type} />
             <OrbitControls enableDamping dampingFactor={0.1} autoRotate autoRotateSpeed={1.5} />
           </Canvas>
@@ -159,7 +168,7 @@ export default function BeamDetailPage() {
           fontSize: 16,
           lineHeight: 1.7,
           marginTop: 24,
-          color: '#ccc',
+          color: PALETTE.textPrimary,
         }}>
           {beam.description}
         </p>
@@ -175,7 +184,7 @@ export default function BeamDetailPage() {
             <li key={i} style={{
               fontSize: 15,
               lineHeight: 1.6,
-              color: '#aaa',
+              color: PALETTE.textSecondary,
             }}>
               {detail}
             </li>
@@ -188,10 +197,10 @@ export default function BeamDetailPage() {
 
 const backButtonStyle = {
   padding: '8px 16px',
-  border: '1px solid rgba(255,255,255,0.3)',
+  border: `1px solid ${PALETTE.accent}`,
   borderRadius: 6,
   background: 'transparent',
-  color: 'white',
+  color: PALETTE.accent,
   cursor: 'pointer',
   fontSize: 14,
 };

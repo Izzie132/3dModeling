@@ -14,7 +14,7 @@ function StructuralMember({ position, args, rotation = [0, 0, 0] }) {
   return (
     <mesh position={position} rotation={rotation}>
       <boxGeometry args={args} />
-      <meshStandardMaterial color={STRUCTURAL_COLOR} />
+      <meshStandardMaterial color={STRUCTURAL_COLOR} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
     </mesh>
   );
 }

@@ -1,3 +1,20 @@
+// ── Brand & UI palette ──────────────────────────────────────────
+export const BRAND_GREEN = '#2E7D32';
+
+export const PALETTE = {
+  ground:          '#787878',   // Light grey – building ground plane
+  pageBg:          '#2e2e2e',   // Medium-dark charcoal – detail page background
+  canvasBg:        '#ffffff',   // White – detail page 3D canvas
+  ghost:           '#cccccc',   // Muted beams (semi-visible) in detail diagrams
+  muted:           '#e0e0e0',   // Very faint structural beams in detail diagrams
+  textPrimary:     '#e0e0e0',   // Main body text
+  textSecondary:   '#aaaaaa',   // Secondary / list text
+  border:          'rgba(255,255,255,0.12)', // Subtle borders
+  accent:          '#2E7D32',   // Brand green – buttons, highlights
+  accentHover:     '#43A047',   // Lighter green for hover states
+};
+
+// ── Beam colours (unchanged) ────────────────────────────────────
 export const BEAM_COLORS = {
   eaves: '#457B9D',
   rails: '#2A9D8F',
